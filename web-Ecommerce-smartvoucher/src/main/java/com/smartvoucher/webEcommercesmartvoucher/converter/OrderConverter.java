@@ -31,12 +31,14 @@ public class OrderConverter {
             orderDTO.setOrderNo(orderEntity.getOrderNo());
             orderDTO.setStatus(orderEntity.getStatus());
             orderDTO.setQuantity(orderEntity.getQuantity());
+            orderDTO.setDiscountName(orderEntity.getIdWarehouse().getDiscountType().getName());
             orderDTO.setCreatedAt(orderEntity.getCreatedAt());
             orderDTO.setUpdatedAt(orderEntity.getUpdatedAt());
             orderDTO.setCreatedBy(orderEntity.getCreatedBy());
             orderDTO.setUpdatedBy(orderEntity.getUpdatedBy());
         return orderDTO;
     }
+
 
     public OrderEntity insertOrder(OrderDTO orderDTO, UserEntity idUser, WareHouseEntity idWareHouse, String orderNoRandom) {
         OrderEntity order = new OrderEntity();

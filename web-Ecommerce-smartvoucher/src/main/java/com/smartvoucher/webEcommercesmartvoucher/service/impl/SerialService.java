@@ -12,9 +12,7 @@ import com.smartvoucher.webEcommercesmartvoucher.exception.CheckStatusWarehouseE
 import com.smartvoucher.webEcommercesmartvoucher.exception.DuplicationCodeException;
 import com.smartvoucher.webEcommercesmartvoucher.exception.ObjectNotFoundException;
 import com.smartvoucher.webEcommercesmartvoucher.payload.ResponseObject;
-import com.smartvoucher.webEcommercesmartvoucher.repository.IWareHouseRepository;
-import com.smartvoucher.webEcommercesmartvoucher.repository.SerialRepository;
-import com.smartvoucher.webEcommercesmartvoucher.repository.WarehouseSerialRepository;
+import com.smartvoucher.webEcommercesmartvoucher.repository.*;
 import com.smartvoucher.webEcommercesmartvoucher.service.ISerialService;
 import com.smartvoucher.webEcommercesmartvoucher.util.RandomCodeHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +25,8 @@ import java.util.List;
 @Service
 @Slf4j
 public class SerialService implements ISerialService {
+    private final TicketHistoryRepository ticketHistoryRepository;
+    private final TicketRepository ticketRepository;
     private final SerialRepository serialRepository;
     private final SerialConverter serialConverter;
     private final WarehouseSerialRepository warehouseSerialRepository;
@@ -40,13 +40,17 @@ public class SerialService implements ISerialService {
                          WarehouseSerialRepository warehouseSerialRepository,
                          IWareHouseRepository wareHouseRepository,
                          RandomCodeHandler randomCodeHandler,
-                         WareHouseConverter wareHouseConverter) {
+                         WareHouseConverter wareHouseConverter,
+                         TicketHistoryRepository ticketHistoryRepository,
+                         TicketRepository ticketRepository) {
         this.serialRepository = serialRepository;
         this.serialConverter = serialConverter;
         this.warehouseSerialRepository = warehouseSerialRepository;
         this.wareHouseRepository = wareHouseRepository;
         this.randomCodeHandler = randomCodeHandler;
         this.wareHouseConverter = wareHouseConverter;
+        this.ticketRepository = ticketRepository;
+        this.ticketHistoryRepository = ticketHistoryRepository;
     }
 
     @Override
@@ -58,8 +62,10 @@ public class SerialService implements ISerialService {
             for (SerialEntity data : list) {
                 listSerial.add(serialConverter.toSerialDTO(data));
             }
+            log.info("Get all serial is completed !");
             return new ResponseObject(200, "List Serial", listSerial);
         } else{
+            log.info("List Serial is empty");
             throw new ObjectNotFoundException(404, "List Serial is empty");
         }
     }
@@ -91,18 +97,23 @@ public class SerialService implements ISerialService {
                             wareHouseConverter.saveWarehouseSerial(serialEntity, wareHouseEntity);
                             listSerial.add(serialEntity);
                         } else {
+                            log.info("Serial is available, add fail!");
                             throw new DuplicationCodeException(400, "Serial is available, add fail!");
                         }
                     }
                 } else {
+                    log.info("Current quantity is "+ (wareHouseEntity.getCapacity() - total) +" vouchers, pls check and try again !");
                     throw new CheckCapacityException(406, "Current quantity is "+ (wareHouseEntity.getCapacity() - total) +" vouchers, pls check and try again !");
                 }
             } else {
+                log.info("Warehouse inactive !");
                 throw new CheckStatusWarehouseException(405, "Warehouse inactive !");
             }
         }else {
+            log.info("Warehouse not found, pls check Warehouse and try again");
             throw new ObjectNotFoundException(404, "Warehouse not found, pls check Warehouse and try again");
         }
+        log.info("Insert serial is completed !");
         return new ResponseObject(200,
                 "Add serial success!",
                 listSerial);
@@ -113,11 +124,13 @@ public class SerialService implements ISerialService {
     public ResponseObject updateSerial(SerialDTO serialDTO) {
         SerialEntity oldSerial = serialRepository.findBySerialCodeAndId(serialDTO.getSerialCode(), serialDTO.getId());
             if (oldSerial != null){
+                log.info("Update Serial success");
                 return new ResponseObject(200,
                                 "Update Serial success",
                                 serialConverter.toSerialDTO(
                                         serialRepository.save(serialConverter.updateSerial(serialDTO, oldSerial))) );
             } else {
+                log.info("Serial not found, update Serial fail!");
                 throw new ObjectNotFoundException(404, "Serial not found, update Serial fail!");
             }
     }
@@ -127,9 +140,14 @@ public class SerialService implements ISerialService {
     public ResponseObject deleteSerial(long id){
         SerialEntity serial = serialRepository.findById(id).orElse(null);
             if(serial != null) {
+                ticketHistoryRepository.deleteBySerialCode(serial.getSerialCode());
+                ticketRepository.deleteByIdSerial(serial);
+                warehouseSerialRepository.deleteByIdSerial(serial);
                 serialRepository.deleteById(id);
+                log.info("Delete Serial Success");
                 return new ResponseObject(200, "Delete Serial Success", true);
             } else {
+                log.info("Can not delete Serial id : " + id);
                 throw new ObjectNotFoundException(404, "Can not delete Serial id : " + id);
             }
     }

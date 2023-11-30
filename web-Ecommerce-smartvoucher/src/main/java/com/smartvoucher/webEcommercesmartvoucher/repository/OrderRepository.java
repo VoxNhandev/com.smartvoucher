@@ -1,7 +1,6 @@
 package com.smartvoucher.webEcommercesmartvoucher.repository;
 
 import com.smartvoucher.webEcommercesmartvoucher.entity.OrderEntity;
-import com.smartvoucher.webEcommercesmartvoucher.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -12,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
+    OrderEntity findOneById(Long id);
     OrderEntity findByOrderNo(String orderNo);
 
     @Query("SELECT o FROM orders o WHERE o.orderNo = ?1 AND o.id != ?2")
@@ -19,10 +19,10 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     @Query("SELECT o FROM orders o " +
             "JOIN users u ON o.idUser.id = u.id " +
             "WHERE u.id = ?1 ")
-    List<OrderEntity> findByIdUser(long id);
+    List<OrderEntity> findAllOrderByIdUser(long id);
 
     @Query("SELECT o FROM orders o " +
             "JOIN users u ON o.idUser.id = u.id " +
-            "WHERE u.email = ?1 ")
-    List<OrderEntity> findByEmail(String email);
+            "WHERE u.id = ?1 ")
+    OrderEntity findOneByIdUser(long id);
 }

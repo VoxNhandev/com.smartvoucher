@@ -1,12 +1,15 @@
 package com.smartvoucher.webEcommercesmartvoucher.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,6 +29,8 @@ public class OrderDTO {
     private int quantity;
     @NotNull(message = "Please fill all information!")
     private WareHouseDTO idWarehouseDTO;
+    private List<TicketDTO> listTicketDTO;
+    private String discountName;
     private String createdBy;
     private String updatedBy;
     private Timestamp createdAt;
