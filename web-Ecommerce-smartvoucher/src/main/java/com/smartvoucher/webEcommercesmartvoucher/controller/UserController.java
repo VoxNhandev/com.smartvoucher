@@ -3,6 +3,7 @@ package com.smartvoucher.webEcommercesmartvoucher.controller;
 import com.smartvoucher.webEcommercesmartvoucher.dto.ChangePasswordDTO;
 import com.smartvoucher.webEcommercesmartvoucher.dto.UserDetailDTO;
 import com.smartvoucher.webEcommercesmartvoucher.payload.ResponseObject;
+import com.smartvoucher.webEcommercesmartvoucher.payload.ResponseOutput;
 import com.smartvoucher.webEcommercesmartvoucher.service.IUserService;
 import com.smartvoucher.webEcommercesmartvoucher.service.oauth2.security.OAuth2UserDetailCustom;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,33 @@ public class UserController {
         )
         );
     }
+
+    @GetMapping("/api/getAll")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ResponseOutput>getAllUser(
+            @RequestParam int page,
+            @RequestParam int limit,
+            @RequestParam String sortBy,
+            @RequestParam String sortField
+    ){
+        log.info("get all user completed !");
+        return new ResponseEntity<>(userService.getAllUser(
+                page, limit, sortBy, sortField), HttpStatus.OK);
+    }
+
+    @GetMapping("/api/search")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ResponseObject>searchUserByEmail(
+            @RequestParam String email
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ResponseObject(200,
+                        "search all user completed !",
+                        userService.searchUserByEmail(email)
+                )
+        );
+    }
+
     @GetMapping("/api/auth2/infor")
     @Transactional(readOnly = true)
     public ResponseEntity<ResponseObject> getUser(@AuthenticationPrincipal OAuth2UserDetailCustom oAuth2User){
@@ -54,13 +82,13 @@ public class UserController {
         );
     }
 
-    @GetMapping("/profile")
+    @GetMapping("/api/profile")
     public ResponseEntity<ResponseObject>profile(Principal principal){
         return ResponseEntity.status(HttpStatus.OK).body(
                 new ResponseObject(
                         200,
-                        "OK",
-                        principal.getName()
+                        "get Information is completed !",
+                        userService.getInformationLoginUser(principal)
                 )
         );
     }
@@ -76,6 +104,20 @@ public class UserController {
                 )
         );
     }
+
+    @PostMapping("/api/uploadAdmin")
+    public ResponseEntity<ResponseObject> uploadFilesAdmin(@RequestParam MultipartFile fileName, Principal connectedUser){
+        log.info("Upload images is completed !");
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ResponseObject(
+                        200,
+                        "Upload images is completed !",
+                        userService.uploadUserImages(fileName, connectedUser)
+                )
+        );
+    }
+
+
     @GetMapping("/api/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<ResponseObject> getUserById(@PathVariable long id) {
@@ -105,6 +147,24 @@ public class UserController {
     @PutMapping("/api/edit")
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<ResponseObject>editProfile(
+            @RequestBody @Valid UserDetailDTO userDetailDTO,
+            Principal connectedUser
+    ){
+        log.info("Update profile is completed !");
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ResponseObject(
+                        200,
+                        "Update profile is completed !",
+                        userService.editUserProfile(
+                                userDetailDTO, connectedUser
+                        )
+                )
+        );
+    }
+
+    @PutMapping("/api/editAdmin")
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<ResponseObject>editProfileAdmin(
             @RequestBody @Valid UserDetailDTO userDetailDTO,
             Principal connectedUser
     ){
